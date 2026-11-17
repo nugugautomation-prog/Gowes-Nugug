@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Gowes } from '../../app/pages/Gowes'
 import { db } from '../../db/database'
+import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '../../ui/Toast'
 import { addManualRide, deleteRide, updateManualRide } from './rideRepo'
 
@@ -78,9 +79,11 @@ describe('rideRepo', () => {
 
 function renderGowes() {
   return render(
-    <ToastProvider>
-      <Gowes />
-    </ToastProvider>,
+    <MemoryRouter>
+      <ToastProvider>
+        <Gowes />
+      </ToastProvider>
+    </MemoryRouter>,
   )
 }
 

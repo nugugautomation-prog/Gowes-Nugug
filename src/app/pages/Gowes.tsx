@@ -1,4 +1,10 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useSetting } from '../../db/useSetting'
+import { MonthProgressCard } from '../../features/stats/MonthProgressCard'
+import { TargetCard } from '../../features/stats/TargetCard'
+import { WeeklyChart } from '../../features/stats/WeeklyChart'
+import { toLocalDate } from '../../domain/ride'
 import type { Ride } from '../../db/types'
 import { formatAngka } from '../../domain/angka'
 import { RideForm } from '../../features/rides/RideForm'
@@ -17,7 +23,13 @@ import { useToast } from '../../ui/Toast'
 export function Gowes() {
   const rides = useRides()
   const toast = useToast()
-  const [formKey, setFormKey] = useState<number | null>(null) // null = tertutup
+  const location = useLocation()
+  const targetKm = useSetting('monthlyTargetKm')
+  const now = new Date()
+  // Datang dari tombol Catat Gowes di Beranda: form langsung terbuka.
+  const [formKey, setFormKey] = useState<number | null>(() =>
+    (location.state as { catat?: boolean } | null)?.catat ? Date.now() : null,
+  ) // null = tertutup
   const [editing, setEditing] = useState<Ride | undefined>()
   const [detail, setDetail] = useState<Ride | undefined>()
   const [confirmDelete, setConfirmDelete] = useState<Ride | undefined>()
@@ -45,7 +57,17 @@ export function Gowes() {
           Memuat…
         </p>
       ) : (
-        <RideList rides={rides} onSelect={setDetail} />
+        <div className="space-y-4">
+          <WeeklyChart rides={rides} targetKm={targetKm} now={now} />
+          <MonthProgressCard
+            rides={rides}
+            targetKm={targetKm}
+            month={toLocalDate(now).slice(0, 7)}
+          />
+          <TargetCard targetKm={targetKm} />
+          <h2 className="pt-2 text-lg font-semibold">Riwayat</h2>
+          <RideList rides={rides} onSelect={setDetail} />
+        </div>
       )}
 
       {formKey !== null ? (
