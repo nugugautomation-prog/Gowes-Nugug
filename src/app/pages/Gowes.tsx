@@ -7,6 +7,7 @@ import { WeeklyChart } from '../../features/stats/WeeklyChart'
 import { toLocalDate } from '../../domain/ride'
 import type { Ride } from '../../db/types'
 import { formatAngka } from '../../domain/angka'
+import { RecordedRideDetail } from '../../features/rides/RecordedRideDetail'
 import { RideForm } from '../../features/rides/RideForm'
 import { RideList, formatTanggal } from '../../features/rides/RideList'
 import {
@@ -86,7 +87,16 @@ export function Gowes() {
         />
       ) : null}
 
-      {detail ? (
+      {detail?.source === 'recorded' ? (
+        <RecordedRideDetail
+          key={detail.id}
+          ride={detail}
+          onClose={() => setDetail(undefined)}
+          onDelete={() => setConfirmDelete(detail)}
+        />
+      ) : null}
+
+      {detail && detail.source === 'manual' ? (
         <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] rounded-t-3xl border border-line bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <p className="font-semibold">
             {formatTanggal(detail.date)} · {formatAngka(detail.distanceKm)} km

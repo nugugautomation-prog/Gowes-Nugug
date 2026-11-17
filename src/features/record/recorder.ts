@@ -37,6 +37,11 @@ export interface RecorderView {
   stats: Stats
   /** Kecepatan saat ini (km/jam); 0 saat jeda. */
   speedKmh: number
+  /** Jejak [lon, lat] yang sudah ditempuh (dimutasi di tempat; pakai trackVersion untuk memantau). */
+  track: [number, number][]
+  trackVersion: number
+  /** Posisi terakhir [lon, lat]. */
+  position: [number, number] | null
   startedAt: number | null
   /** Waktu titik valid terakhir (untuk indikator sinyal hilang, ERR-003). */
   lastFixAt: number | null
@@ -87,6 +92,9 @@ export class Recorder {
       phase: 'idle',
       stats: statsOf(this.engine),
       speedKmh: 0,
+      track: [],
+      trackVersion: 0,
+      position: null,
       startedAt: null,
       lastFixAt: null,
       autoPaused: false,
@@ -126,7 +134,13 @@ export class Recorder {
           pausedTotalSec: rec.pausedTotalSec + gapSec, // celah dihitung jeda (WF-01)
         })
         this.engine.maxKmh = rec.maxSpeedKmh ?? 0
-        this.set({ startedAt: rec.startedAt, stats: statsOf(this.engine) })
+        const pts = await activePoints(this.db)
+        this.set({
+          startedAt: rec.startedAt,
+          stats: statsOf(this.engine),
+          track: pts.map((p): [number, number] => [p.lon, p.lat]),
+          trackVersion: 1,
+        })
       } else {
         const rec = await startRecording(this.db, this.now())
         this.engine = initialState()
@@ -177,12 +191,15 @@ export class Recorder {
     })
     this.engine = r.state
     if (!r.accepted) return
+    this.view.track.push([c.longitude, c.latitude])
     const phase: Phase = this.engine.status === 'jeda' ? 'jeda' : 'merekam'
     this.set({
       phase,
       stats: statsOf(this.engine),
       speedKmh: this.engine.status === 'jeda' ? 0 : this.engine.kmh,
       lastFixAt: p.timestamp,
+      position: [c.longitude, c.latitude],
+      trackVersion: this.view.trackVersion + 1,
       autoPaused: this.engine.status === 'jeda' && !this.engine.manualPause,
       manualPaused: this.engine.manualPause,
     })

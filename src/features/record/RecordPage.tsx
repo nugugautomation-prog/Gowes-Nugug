@@ -14,6 +14,7 @@ import { PageHeader } from '../../ui/PageHeader'
 import { Stat } from '../../ui/Stat'
 import { useNow } from '../../ui/useNow'
 import { useToast } from '../../ui/Toast'
+import { TrackMap } from '../map/TrackMap'
 import { Recorder, type RecorderDeps } from './recorder'
 import { RecoveryChoices } from './RecoveryChoices'
 import { discardRecording, getActive, saveRecording } from './recorderRepo'
@@ -37,6 +38,8 @@ export function RecordPage({ deps }: { deps?: RecorderDeps }) {
   const location = useLocation()
   const toast = useToast()
   const seen = useSetting('safetyNoticeSeen')
+  const styleUrl = useSetting('mapStyleUrl')
+  const [showMap, setShowMap] = useState(true)
   const [recorder] = useState(() => new Recorder(deps))
   const view = useSyncExternalStore(recorder.subscribe, recorder.getView)
   const now = useNow(1000).getTime()
@@ -271,6 +274,18 @@ export function RecordPage({ deps }: { deps?: RecorderDeps }) {
                   <Stat size="md" value={s.elevationM} unit="m" label="Tanjakan" />
                 </div>
               </div>
+              {showMap && view.position ? (
+                <TrackMap
+                  mode="follow"
+                  styleUrl={styleUrl}
+                  track={view.track}
+                  current={view.position}
+                  version={view.trackVersion}
+                />
+              ) : null}
+              <Chip selected={showMap} onClick={() => setShowMap(!showMap)}>
+                Tampilkan peta
+              </Chip>
             </>
           ) : null}
 

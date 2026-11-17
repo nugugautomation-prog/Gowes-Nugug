@@ -44,6 +44,32 @@ export async function updateManualRide(
   await db.rides.put({ ...existing, ...clean(data), updatedAt: Date.now() })
 }
 
+/** BR-009/FR-142: pada gowes rekaman hanya kategori, jenis, kondisi, dan catatan yang boleh diubah. */
+export type RecordedMeta = Pick<Ride, 'category' | 'type' | 'condition' | 'note'>
+
+export async function updateRecordedMeta(
+  id: string,
+  meta: RecordedMeta,
+  db: GowesDB = defaultDb,
+): Promise<void> {
+  await db.transaction('rw', db.rides, async () => {
+    const existing = await db.rides.get(id)
+    if (!existing) throw new Error('Gowes tidak ditemukan')
+    if (existing.source !== 'recorded') throw new Error('Hanya untuk gowes rekaman')
+    const note = meta.note?.trim()
+    const next: Ride = {
+      ...existing,
+      category: meta.category,
+      type: meta.type,
+      condition: meta.condition,
+      updatedAt: Date.now(),
+    }
+    if (note) next.note = note
+    else delete next.note
+    await db.rides.put(next) // jarak, waktu, elevasi, jejak tidak tersentuh
+  })
+}
+
 /** Hapus gowes beserta jejaknya (bila ada) dalam satu transaksi. */
 export async function deleteRide(id: string, db: GowesDB = defaultDb): Promise<void> {
   await db.transaction('rw', db.rides, db.track_points, async () => {
