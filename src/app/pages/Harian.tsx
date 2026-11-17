@@ -1,4 +1,5 @@
 import { toLocalDate } from '../../domain/ride'
+import { MoodCard } from '../../features/body/MoodCard'
 import { ChecklistCard } from '../../features/checklist/ChecklistCard'
 import { HydrationCard } from '../../features/daily/HydrationCard'
 import { JournalCard } from '../../features/daily/JournalCard'
@@ -14,6 +15,7 @@ export function Harian() {
         <HydrationCard today={today} />
         <ChecklistCard today={today} />
         <JournalCard today={today} />
+        <MoodCard today={today} />
       </div>
     </>
   )

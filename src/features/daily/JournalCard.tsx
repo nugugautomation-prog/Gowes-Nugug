@@ -4,6 +4,7 @@ import { addDays } from '../../domain/stats'
 import { parseAngka } from '../../domain/angka'
 import { validateJournal, type JournalErrors } from '../../domain/readiness'
 import { Button } from '../../ui/Button'
+import { Field } from '../../ui/Field'
 import { Card } from '../../ui/Card'
 import { Chip } from '../../ui/Chip'
 import { useToast } from '../../ui/Toast'
@@ -130,8 +131,7 @@ function JournalForm({
         ) : null}
       </fieldset>
       <Stepper label="Buah serat" unit="porsi" value={fruit} step={1} onChange={setFruit} />
-      <label className="block">
-        <span className="mb-1 block text-sm text-muted">Main bareng anak (menit)</span>
+      <Field label="Main bareng anak (menit)" error={errors.kidMinutes}>
         <input
           className="min-h-12 w-full rounded-xl border border-line bg-bg px-3 text-text tabular placeholder:text-muted"
           inputMode="numeric"
@@ -139,12 +139,7 @@ function JournalForm({
           value={kid}
           onChange={(e) => setKid(e.target.value)}
         />
-        {errors.kidMinutes ? (
-          <span role="alert" className="mt-1 block text-sm text-danger">
-            {errors.kidMinutes}
-          </span>
-        ) : null}
-      </label>
+      </Field>
       {saveError ? (
         <p role="alert" className="text-danger">
           {saveError}

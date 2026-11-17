@@ -17,6 +17,7 @@ import {
 import type { Condition, Ride, RideCategory, RideType } from '../../db/types'
 import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
+import { Field } from '../../ui/Field'
 import { Sheet } from '../../ui/Sheet'
 import type { ManualRideData } from './rideRepo'
 
@@ -32,28 +33,6 @@ interface Props {
 
 const inputCls =
   'min-h-12 w-full rounded-xl border border-line bg-bg px-3 text-text tabular placeholder:text-muted'
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm text-muted">{label}</span>
-      {children}
-      {error ? (
-        <span role="alert" className="mt-1 block text-sm text-danger">
-          {error}
-        </span>
-      ) : null}
-    </label>
-  )
-}
 
 function initial(ride: Ride | undefined, today: string) {
   if (ride) {
