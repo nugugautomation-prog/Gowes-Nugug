@@ -51,6 +51,14 @@ export function Lainnya() {
                 Panduan nutrisi
               </Link>
             </li>
+            <li>
+              <Link
+                className="flex min-h-12 items-center text-brand underline"
+                to="/lainnya/pengingat"
+              >
+                Pengingat
+              </Link>
+            </li>
           </ul>
         </Card>
         <Card>
