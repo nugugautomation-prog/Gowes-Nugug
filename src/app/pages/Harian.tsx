@@ -1,15 +1,18 @@
 import { toLocalDate } from '../../domain/ride'
+import { ChecklistCard } from '../../features/checklist/ChecklistCard'
 import { HydrationCard } from '../../features/daily/HydrationCard'
 import { JournalCard } from '../../features/daily/JournalCard'
 import { PageHeader } from '../../ui/PageHeader'
+import { useNow } from '../../ui/useNow'
 
 export function Harian() {
-  const today = toLocalDate(new Date())
+  const today = toLocalDate(useNow()) // pergantian hari ikut menyegarkan air, jurnal, dan checklist
   return (
     <>
-      <PageHeader title="Harian" subtitle="Jurnal dan air" />
+      <PageHeader title="Harian" subtitle="Air, jurnal, dan rutinitas" />
       <div className="space-y-4">
         <HydrationCard today={today} />
+        <ChecklistCard today={today} />
         <JournalCard today={today} />
       </div>
     </>
