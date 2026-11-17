@@ -34,7 +34,14 @@ export function Beranda() {
             month={toLocalDate(new Date()).slice(0, 7)}
           />
         )}
-        <Button className="w-full" onClick={() => navigate('/gowes', { state: { catat: true } })}>
+        <Button large className="w-full" onClick={() => navigate('/rekam')}>
+          Mulai Gowes
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => navigate('/gowes', { state: { catat: true } })}
+        >
           Catat Gowes
         </Button>
       </div>

@@ -54,6 +54,7 @@ export interface ActiveRecording {
   distanceKm: number
   movingSec: number
   elevationM: number
+  maxSpeedKmh?: number
 }
 
 export type Sleep = 'segar' | 'cukup' | 'kurang'
