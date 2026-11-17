@@ -5,7 +5,7 @@ import { useSetting } from '../../db/useSetting'
 import { formatAngka } from '../../domain/angka'
 import { CONDITION_EMOJI, CONDITION_LABEL, formatDuration, toLocalDate } from '../../domain/ride'
 import { addDays, weekStart } from '../../domain/stats'
-import { sleepWord, weeklySummary, type SummaryData } from '../../domain/summary'
+import { weeklySummary, type SummaryData } from '../../domain/summary'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { useNow } from '../../ui/useNow'
@@ -31,14 +31,12 @@ function Row({ label, value }: { label: string; value: string }) {
 function useSummaryData(): SummaryData | undefined {
   const ideal = useSetting('idealWeightKg')
   const raw = useLiveQuery(async () => {
-    const [rides, journals, hydration, bodyLogs, checklistDays] = await Promise.all([
+    const [rides, bodyLogs, checklistDays] = await Promise.all([
       db.rides.toArray(),
-      db.journals.toArray(),
-      db.hydration.toArray(),
       db.body_logs.toArray(),
       db.checklist_days.toArray(),
     ])
-    return { rides, journals, hydration, bodyLogs, checklistDays }
+    return { rides, bodyLogs, checklistDays }
   }, [])
   return raw ? { ...raw, idealWeightKg: ideal } : undefined
 }
@@ -115,16 +113,6 @@ export function WeeklySummaryCard() {
             label="Rata-rata per gowes"
             value={c.perRideDelta !== null ? `${signed(c.perRideDelta)} km` : NA}
           />
-          <Row label="Tidur" value={s.sleepAvg !== null ? sleepWord(s.sleepAvg) : NA} />
-          <Row
-            label="Buah"
-            value={s.fruitAvg !== null ? `${formatAngka(s.fruitAvg)} porsi/hari` : NA}
-          />
-          <Row
-            label="Air"
-            value={s.waterAvgMl !== null ? `${Math.round(s.waterAvgMl)} ml/hari` : NA}
-          />
-          <Row label="Bareng anak" value={`${s.kidMinutes} menit`} />
           <Row
             label="Perubahan berat"
             value={s.weightChangeKg !== null ? `${signed(s.weightChangeKg)} kg` : NA}

@@ -1,51 +1,51 @@
 @import 'tailwindcss';
 
 /*
-  Token warna (D-16). Mode gelap = bawaan. Neon hanya sebagai isi tombol/aksen;
-  teks hijau di tema terang memakai hijau tua. Nilai diuji kontrasnya di src/ui/theme.test.ts.
+  Token warna (D-16, direvisi D-26). Mode gelap = bawaan, nada abu-biru lembut tanpa hitam pekat
+  dan tanpa neon; tema terang krem hangat. Aksen teal/hijau tua. Nilai diuji kontrasnya di src/ui/theme.test.ts.
 */
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0c100d;
-  --card: #151b16;
-  --text: #eaf2eb;
-  --muted: #97a89a;
-  --line: #243027;
-  --accent: #39ff14;
-  --on-accent: #07140a;
-  --brand: #39ff14;
-  --warn: #ffc53d;
-  --danger: #ff5c5c;
+  --bg: #1b2430;
+  --card: #243040;
+  --text: #e8e4da;
+  --muted: #aab5c3;
+  --line: #364559;
+  --accent: #5fb3a1;
+  --on-accent: #0c1816;
+  --brand: #6cc0ae;
+  --warn: #e6b35e;
+  --danger: #f29090;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #f4f7f4;
-  --card: #ffffff;
-  --text: #142016;
-  --muted: #5b6b5e;
-  --line: #dce5dd;
-  --accent: #39ff14;
-  --on-accent: #07140a;
-  --brand: #0b7a2b;
-  --warn: #8a6100;
-  --danger: #c62828;
+  --bg: #f6f2ea;
+  --card: #fffdf8;
+  --text: #2b2620;
+  --muted: #675e52;
+  --line: #e2dacb;
+  --accent: #285c32;
+  --on-accent: #ffffff;
+  --brand: #285c32;
+  --warn: #8a5a00;
+  --danger: #b3261e;
 }
 
 @media (prefers-color-scheme: light) {
   :root[data-theme='system'] {
     color-scheme: light;
-    --bg: #f4f7f4;
-    --card: #ffffff;
-    --text: #142016;
-    --muted: #5b6b5e;
-    --line: #dce5dd;
-    --accent: #39ff14;
-    --on-accent: #07140a;
-    --brand: #0b7a2b;
-    --warn: #8a6100;
-    --danger: #c62828;
+    --bg: #f6f2ea;
+    --card: #fffdf8;
+    --text: #2b2620;
+    --muted: #675e52;
+    --line: #e2dacb;
+    --accent: #285c32;
+    --on-accent: #ffffff;
+    --brand: #285c32;
+    --warn: #8a5a00;
+    --danger: #b3261e;
   }
 }
 

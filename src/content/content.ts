@@ -1,138 +1,111 @@
-// Konten statis (tanpa AI di v1). Aturan: BR-003 tidak menyebut sayur sebagai solusi;
-// BR-004 saran bersifat umum, bukan nasihat medis. Dijaga oleh content.test.ts.
+// Konten statis (tanpa AI di v1). BR-004: saran bersifat umum, bukan nasihat medis.
+// Ide bareng anak dan panduan nutrisi dihapus (D-26).
 
 export const DISCLAIMER = 'Saran umum, bukan nasihat medis. Bila ada keluhan, tanyakan ke dokter.'
 
-export interface KidIdea {
-  id: string
-  title: string
-  tip: string
-}
-
-export const KID_IDEAS: KidIdea[] = [
-  {
-    id: 'berburu-warna',
-    title: 'Berburu warna',
-    tip: 'Cari benda berwarna merah, lalu biru, lalu kuning di sekitar rumah.',
-  },
-  {
-    id: 'lomba-balon',
-    title: 'Lomba balon',
-    tip: 'Jaga balon agar tidak jatuh ke lantai selama satu lagu.',
-  },
-  {
-    id: 'rintangan-bantal',
-    title: 'Lintasan bantal',
-    tip: 'Susun bantal jadi lintasan: lompat, merayap, melangkah.',
-  },
-  {
-    id: 'cerita-gambar',
-    title: 'Cerita dari gambar',
-    tip: 'Gambar satu bentuk, minta anak melanjutkannya jadi cerita.',
-  },
-  {
-    id: 'masak-bareng',
-    title: 'Masak bareng',
-    tip: 'Biarkan anak mengaduk atau menata bahan. Pilih tugas yang aman.',
-  },
-  {
-    id: 'jalan-pagi',
-    title: 'Jalan pagi keliling komplek',
-    tip: 'Hitung berapa burung, kucing, atau motor yang terlihat.',
-  },
-  {
-    id: 'tebak-gerakan',
-    title: 'Tebak gerakan',
-    tip: 'Peragakan hewan tanpa suara, anak menebak lalu gantian.',
-  },
-  {
-    id: 'menara-balok',
-    title: 'Menara balok',
-    tip: 'Bangun menara setinggi mungkin, lalu bongkar sambil tertawa.',
-  },
-  {
-    id: 'piknik-kecil',
-    title: 'Piknik kecil',
-    tip: 'Gelar tikar di teras atau taman dan makan camilan buah bersama.',
-  },
-  {
-    id: 'dansa-musik',
-    title: 'Dansa berhenti',
-    tip: 'Menari saat musik jalan, berhenti seperti patung saat musik mati.',
-  },
-  {
-    id: 'bacakan-buku',
-    title: 'Baca buku bergantian',
-    tip: 'Anak memilih buku, lalu kalian bergantian membaca satu halaman.',
-  },
-  {
-    id: 'cuci-sepeda',
-    title: 'Cuci sepeda bareng',
-    tip: 'Beri anak spons dan tugas kecil untuk membersihkan roda.',
-  },
-]
-
-export interface Pillar {
-  id: string
-  title: string
-  body: string
-  examples: string
-}
-
-export const PILLARS: Pillar[] = [
-  {
-    id: 'buah',
-    title: 'Buah kaya serat',
-    body: 'Buah memberi serat dan tenaga ringan. Targetkan beberapa porsi per hari.',
-    examples: 'Pisang, apel, pepaya, jambu biji, pir.',
-  },
-  {
-    id: 'karbo',
-    title: 'Karbohidrat kompleks',
-    body: 'Sumber tenaga yang bertahan lama, cocok sebelum gowes panjang.',
-    examples: 'Nasi merah, oatmeal, ubi, singkong rebus, roti gandum.',
-  },
-  {
-    id: 'protein',
-    title: 'Protein',
-    body: 'Membantu otot pulih setelah gowes.',
-    examples: 'Telur, ayam, ikan, tempe, tahu, kacang-kacangan.',
-  },
-  {
-    id: 'elektrolit',
-    title: 'Elektrolit alami',
-    body: 'Membantu menggantikan cairan yang hilang lewat keringat.',
-    examples: 'Air kelapa, pisang, air putih dengan sedikit garam.',
-  },
-]
+export type FigureId = 'leher' | 'bahu' | 'pergelangan' | 'paha'
 
 export interface Stretch {
   id: string
+  /** Bagian tubuh yang diregangkan. */
   area: string
-  guide: string
+  /** Sisi yang diregangkan; undefined = kedua sisi sekaligus. */
+  side?: 'kanan' | 'kiri'
+  figure: FigureId
+  /** Langkah berurutan: apa yang dilakukan. */
+  steps: string[]
+  /** Yang seharusnya terasa, dan batas aman. */
+  tip: string
 }
 
-/** Empat gerakan x 15 detik = 60 detik (FR-050). */
+/** Lama tiap gerakan (detik). Satu sisi = satu gerakan. */
 export const STRETCH_SECONDS = 15
+
+export const STRETCH_INTRO =
+  'Lakukan sebelum gowes sebagai pemanasan dan sesudah gowes untuk melemaskan otot. Bergeraklah pelan, napas biasa, dan berhenti bila terasa nyeri (bukan sekadar tertarik).'
+
 export const STRETCHES: Stretch[] = [
   {
-    id: 'leher',
+    id: 'leher-kanan',
     area: 'Leher',
-    guide: 'Miringkan kepala pelan ke kanan lalu ke kiri. Bahu tetap rileks.',
+    side: 'kanan',
+    figure: 'leher',
+    steps: [
+      'Berdiri atau duduk tegak, kedua bahu turun dan rileks.',
+      'Miringkan kepala ke kanan: telinga kanan mendekati bahu kanan.',
+      'Tangan kanan boleh menekan lembut sisi kepala. Tahan sambil bernapas pelan.',
+    ],
+    tip: 'Tarikan terasa di sisi kiri leher. Jangan angkat bahu kiri.',
+  },
+  {
+    id: 'leher-kiri',
+    area: 'Leher',
+    side: 'kiri',
+    figure: 'leher',
+    steps: [
+      'Tegakkan kepala, bahu tetap turun.',
+      'Miringkan kepala ke kiri: telinga kiri mendekati bahu kiri.',
+      'Tangan kiri boleh menekan lembut sisi kepala. Tahan sambil bernapas pelan.',
+    ],
+    tip: 'Tarikan terasa di sisi kanan leher. Jangan angkat bahu kanan.',
   },
   {
     id: 'bahu',
     area: 'Bahu',
-    guide: 'Putar kedua bahu ke belakang dengan gerakan besar dan lambat.',
+    figure: 'bahu',
+    steps: [
+      'Berdiri tegak, lengan di samping badan.',
+      'Angkat kedua bahu ke arah telinga, lalu putar ke belakang membentuk lingkaran besar.',
+      'Ulangi pelan dan berkesinambungan selama waktu berjalan.',
+    ],
+    tip: 'Bahu dan punggung atas terasa mengendur. Bagus untuk posisi membungkuk di sepeda.',
   },
   {
-    id: 'pergelangan',
+    id: 'pergelangan-kanan',
     area: 'Pergelangan tangan',
-    guide: 'Putar pergelangan tangan ke dua arah, lalu kepalkan dan buka jari.',
+    side: 'kanan',
+    figure: 'pergelangan',
+    steps: [
+      'Luruskan lengan kanan ke depan setinggi dada, telapak menghadap ke atas.',
+      'Dengan tangan kiri, tarik pelan jari-jari tangan kanan ke arah badan.',
+      'Tahan. Siku kanan tetap lurus.',
+    ],
+    tip: 'Tarikan terasa di sisi bawah lengan. Penting untuk tangan yang menahan setang.',
   },
   {
-    id: 'pinggul',
-    area: 'Pinggul',
-    guide: 'Berdiri, putar pinggul membentuk lingkaran besar ke dua arah.',
+    id: 'pergelangan-kiri',
+    area: 'Pergelangan tangan',
+    side: 'kiri',
+    figure: 'pergelangan',
+    steps: [
+      'Luruskan lengan kiri ke depan setinggi dada, telapak menghadap ke atas.',
+      'Dengan tangan kanan, tarik pelan jari-jari tangan kiri ke arah badan.',
+      'Tahan. Siku kiri tetap lurus.',
+    ],
+    tip: 'Tarikan terasa di sisi bawah lengan. Penting untuk tangan yang menahan setang.',
+  },
+  {
+    id: 'paha-kanan',
+    area: 'Paha depan dan pinggul',
+    side: 'kanan',
+    figure: 'paha',
+    steps: [
+      'Berdiri tegak, pegang dinding atau sandaran kursi bila perlu.',
+      'Tekuk lutut kanan ke belakang, pegang pergelangan kaki kanan dengan tangan kanan.',
+      'Tarik tumit mendekati bokong, dorong pinggul sedikit ke depan. Lutut menunjuk ke lantai.',
+    ],
+    tip: 'Tarikan terasa di paha depan kanan. Punggung tetap tegak, jangan melengkung.',
+  },
+  {
+    id: 'paha-kiri',
+    area: 'Paha depan dan pinggul',
+    side: 'kiri',
+    figure: 'paha',
+    steps: [
+      'Berdiri tegak, pegang dinding atau sandaran kursi bila perlu.',
+      'Tekuk lutut kiri ke belakang, pegang pergelangan kaki kiri dengan tangan kiri.',
+      'Tarik tumit mendekati bokong, dorong pinggul sedikit ke depan. Lutut menunjuk ke lantai.',
+    ],
+    tip: 'Tarikan terasa di paha depan kiri. Punggung tetap tegak, jangan melengkung.',
   },
 ]

@@ -51,7 +51,7 @@ describe('checklistRepo (BR-020)', () => {
     expect(await db.checklist_items.count()).toBe(3)
     const rows = await db.checklist_days.where('date').equals(today).toArray()
     expect(rows.map((r) => r.title).sort()).toEqual([
-      'Jurnal malam',
+      'Cek ban dan rem',
       'Minum air pagi',
       'Peregangan',
     ])

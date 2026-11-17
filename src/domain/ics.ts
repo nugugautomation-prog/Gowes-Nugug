@@ -1,22 +1,11 @@
-import type { ReminderTimes } from '../db/types'
-import { addDays, weekStart } from './stats'
+import type { Reminder } from '../db/types'
+import { validTime } from './reminders'
 
-export type ReminderKind = 'minum' | 'jurnal' | 'sabtu' | 'minggu'
-
-export const REMINDER_LABEL: Record<ReminderKind, string> = {
-  minum: 'Minum air',
-  jurnal: 'Jurnal malam',
-  sabtu: 'Gowes Sabtu sore',
-  minggu: 'Gowes Minggu pagi',
-}
+export { validTime }
 
 const TZ = 'Asia/Jakarta'
 const CRLF = '\r\n'
-
-/** Jam valid "HH:MM" 00:00–23:59 (VAL jam). */
-export function validTime(t: string): boolean {
-  return /^([01]\d|2[0-3]):[0-5]\d$/.test(t)
-}
+const DAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const
 
 /** Escape TEXT menurut RFC 5545: \ ; , dan baris baru. */
 export function escapeText(s: string): string {
@@ -46,74 +35,47 @@ export function foldLine(line: string): string {
   return parts.join(CRLF + ' ')
 }
 
-export interface ReminderEvent {
-  kind: ReminderKind
-  time: string // HH:MM
+export interface IcsEvent {
+  uid: string
   summary: string
   description: string
-  /** Tanggal mulai 'YYYY-MM-DD'. */
+  /** 'YYYY-MM-DD' kejadian pertama. */
   startDate: string
-  rrule: string
+  /** 'HH:MM' waktu WIB. */
+  time: string
+  /** Aturan ulang tanpa awalan "RRULE:", atau undefined = sekali. */
+  rrule?: string
 }
 
 const compactDate = (d: string) => d.replace(/-/g, '')
 const compactTime = (t: string) => t.replace(':', '') + '00'
 
-function firstWeekday(today: string, offsetFromMonday: number): string {
-  const d = addDays(weekStart(today), offsetFromMonday)
-  return d < today ? addDays(d, 7) : d
+function weekdayCode(date: string): string {
+  const [y = 0, m = 1, d = 1] = date.split('-').map(Number)
+  return DAY_CODES[new Date(y, m - 1, d).getDay()] ?? 'MO'
 }
 
-/** Susun daftar kejadian berulang dari jam pilihan (FR-110/111). Jam tak valid → galat. */
-export function buildReminderEvents(
-  times: ReminderTimes,
-  kinds: ReminderKind[],
-  today: string,
-): ReminderEvent[] {
-  const out: ReminderEvent[] = []
-  const check = (t: string) => {
-    if (!validTime(t)) throw new Error(`Jam tidak valid: ${t}`)
-    return t
+/** Ubah pengingat menjadi acara kalender. Jam atau tanggal tak valid → galat. */
+export function reminderToEvent(r: Reminder): IcsEvent {
+  if (!validTime(r.time)) throw new Error(`Jam tidak valid: ${r.time}`)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date)) throw new Error(`Tanggal tidak valid: ${r.date}`)
+  const day = Number(r.date.slice(8))
+  const rrule =
+    r.repeat === 'daily'
+      ? 'FREQ=DAILY'
+      : r.repeat === 'weekly'
+        ? `FREQ=WEEKLY;BYDAY=${weekdayCode(r.date)}`
+        : r.repeat === 'monthly'
+          ? `FREQ=MONTHLY;BYMONTHDAY=${day}`
+          : undefined
+  return {
+    uid: `gowessehat-${r.id}@gowessehat.local`, // tetap per pengingat: impor ulang tidak menggandakan
+    summary: r.title,
+    description: r.note ?? '',
+    startDate: r.date,
+    time: r.time,
+    rrule,
   }
-  if (kinds.includes('minum')) {
-    for (const t of [...new Set(times.minum.map(check))].sort())
-      out.push({
-        kind: 'minum',
-        time: t,
-        summary: 'Minum air 💧',
-        description: 'Waktunya minum air. Target hari ini 2.500 ml.',
-        startDate: today,
-        rrule: 'FREQ=DAILY',
-      })
-  }
-  if (kinds.includes('jurnal'))
-    out.push({
-      kind: 'jurnal',
-      time: check(times.jurnal),
-      summary: 'Isi jurnal malam 📝',
-      description: 'Catat tidur, buah, dan waktu bareng anak hari ini.',
-      startDate: today,
-      rrule: 'FREQ=DAILY',
-    })
-  if (kinds.includes('sabtu'))
-    out.push({
-      kind: 'sabtu',
-      time: check(times.sabtu),
-      summary: 'Gowes sore 🚴',
-      description: 'Waktunya gowes Sabtu sore. Cek kesiapan di aplikasi dulu.',
-      startDate: firstWeekday(today, 5),
-      rrule: 'FREQ=WEEKLY;BYDAY=SA',
-    })
-  if (kinds.includes('minggu'))
-    out.push({
-      kind: 'minggu',
-      time: check(times.minggu),
-      summary: 'Gowes pagi 🚴',
-      description: 'Waktunya gowes Minggu pagi. Cek kesiapan di aplikasi dulu.',
-      startDate: firstWeekday(today, 6),
-      rrule: 'FREQ=WEEKLY;BYDAY=SU',
-    })
-  return out
 }
 
 const VTIMEZONE = [
@@ -136,8 +98,8 @@ export function utcStamp(ms: number): string {
     .replace(/\.\d{3}/, '')
 }
 
-/** Bangun isi file .ics (CRLF, terlipat). UID tetap per jenis+jam agar impor ulang tidak menggandakan. */
-export function buildIcs(events: ReminderEvent[], nowMs: number): string {
+/** Bangun isi file .ics (CRLF, terlipat) dengan alarm tepat waktu (VALARM). */
+export function buildIcs(events: IcsEvent[], nowMs: number): string {
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -148,13 +110,13 @@ export function buildIcs(events: ReminderEvent[], nowMs: number): string {
   for (const e of events) {
     lines.push(
       'BEGIN:VEVENT',
-      `UID:gowessehat-${e.kind}-${e.time.replace(':', '')}@gowessehat.local`,
+      `UID:${e.uid}`,
       `DTSTAMP:${utcStamp(nowMs)}`,
       `DTSTART;TZID=${TZ}:${compactDate(e.startDate)}T${compactTime(e.time)}`,
       'DURATION:PT15M',
-      `RRULE:${e.rrule}`,
+      ...(e.rrule ? [`RRULE:${e.rrule}`] : []),
       `SUMMARY:${escapeText(e.summary)}`,
-      `DESCRIPTION:${escapeText(e.description)}`,
+      ...(e.description ? [`DESCRIPTION:${escapeText(e.description)}`] : []),
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${escapeText(e.summary)}`,

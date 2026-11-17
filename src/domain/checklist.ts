@@ -1,7 +1,7 @@
 export const MAX_CHECKLIST_TITLE = 60
 
 /** Isi awal yang bisa dihapus (FR-071, OQ-P7 disetujui). */
-export const DEFAULT_CHECKLIST = ['Minum air pagi', 'Peregangan', 'Jurnal malam'] as const
+export const DEFAULT_CHECKLIST = ['Minum air pagi', 'Peregangan', 'Cek ban dan rem'] as const
 
 /** VAL-007: judul 1–60 karakter setelah dipangkas. Mengembalikan judul bersih atau pesan galat. */
 export function validateChecklistTitle(

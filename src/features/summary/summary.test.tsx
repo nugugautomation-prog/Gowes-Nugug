@@ -13,15 +13,7 @@ import { addManualRide } from '../rides/rideRepo'
 const today = toLocalDate(new Date())
 
 beforeEach(async () => {
-  for (const t of [
-    db.rides,
-    db.journals,
-    db.hydration,
-    db.body_logs,
-    db.checklist_days,
-    db.checklist_items,
-    db.settings,
-  ])
+  for (const t of [db.rides, db.body_logs, db.checklist_days, db.checklist_items, db.settings])
     await t.clear()
   await ensureDefaults(db)
 })

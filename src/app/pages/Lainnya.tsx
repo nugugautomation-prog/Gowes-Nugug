@@ -36,21 +36,8 @@ export function Lainnya() {
           </div>
         </Card>
         <Card>
-          <h2 className="mb-2 font-semibold">Panduan</h2>
+          <h2 className="mb-2 font-semibold">Menu</h2>
           <ul className="space-y-2">
-            <li>
-              <Link className="flex min-h-12 items-center text-brand underline" to="/lainnya/anak">
-                Ide bareng anak
-              </Link>
-            </li>
-            <li>
-              <Link
-                className="flex min-h-12 items-center text-brand underline"
-                to="/lainnya/nutrisi"
-              >
-                Panduan nutrisi
-              </Link>
-            </li>
             <li>
               <Link
                 className="flex min-h-12 items-center text-brand underline"

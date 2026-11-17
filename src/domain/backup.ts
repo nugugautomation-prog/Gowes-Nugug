@@ -6,13 +6,14 @@ import type {
   Hydration,
   Journal,
   KidCheck,
+  Reminder,
   Ride,
   Settings,
   TrackPoint,
 } from '../db/types'
 
 export const BACKUP_APP = 'gowessehat'
-export const BACKUP_SCHEMA_VERSION = 1
+export const BACKUP_SCHEMA_VERSION = 2
 export const MAX_BACKUP_BYTES = 50 * 1024 * 1024
 export const BACKUP_DAYS = 14
 export const BACKUP_RIDES = 10
@@ -29,6 +30,7 @@ export interface BackupData {
   checklistItems: ChecklistItem[]
   checklistDays: ChecklistDay[]
   kidChecks: KidCheck[]
+  reminders: Reminder[]
   settings: Partial<Settings>
 }
 
@@ -99,6 +101,18 @@ const dayS = z.object({
 })
 const kidS = z.object({ activityId: z.string().min(1).max(100), done: z.boolean(), updatedAt: ts })
 
+const reminderS = z.object({
+  id: z.string().min(1).max(100),
+  title: z.string().min(1).max(80),
+  note: z.string().max(280).optional(),
+  date,
+  time,
+  repeat: z.enum(['none', 'daily', 'weekly', 'monthly']),
+  done: z.boolean(),
+  createdAt: ts,
+  updatedAt: ts,
+})
+
 const settingsS = z
   .object({
     monthlyTargetKm: num(1, 10_000),
@@ -130,6 +144,8 @@ const fileS = z.object({
   checklistItems: z.array(itemS),
   checklistDays: z.array(dayS),
   kidChecks: z.array(kidS),
+  // Berkas versi 1 belum punya pengingat umum: dianggap kosong.
+  reminders: z.array(reminderS).default([]),
   settings: settingsS,
 })
 
@@ -152,6 +168,7 @@ export function buildBackup(data: BackupData, includeTracks: boolean, nowMs: num
     checklistItems: data.checklistItems,
     checklistDays: data.checklistDays,
     kidChecks: data.kidChecks,
+    reminders: data.reminders,
     settings: data.settings,
   }
 }
@@ -199,6 +216,7 @@ export function parseBackup(text: string): ParseResult {
     dupes(f.checklistItems, (x) => x.id) ||
     dupes(f.checklistDays, (x) => `${x.date}|${x.itemId}`) ||
     dupes(f.kidChecks, (x) => x.activityId) ||
+    dupes(f.reminders, (x) => x.id) ||
     dupes(f.trackPoints, (x) => `${x[0]}|${x[1]}`)
   )
     return fail('File memuat data ganda.')
@@ -229,6 +247,7 @@ export function parseBackup(text: string): ParseResult {
       checklistItems: f.checklistItems,
       checklistDays: f.checklistDays,
       kidChecks: f.kidChecks,
+      reminders: f.reminders,
       settings: f.settings,
     },
   }

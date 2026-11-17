@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { BodyLog, ChecklistDay, Hydration, Journal, Ride } from '../db/types'
-import {
-  balanceForMonth,
-  dominantMood,
-  mean,
-  sleepWord,
-  weeklySummary,
-  type SummaryData,
-} from './summary'
+import type { BodyLog, ChecklistDay, Ride } from '../db/types'
+import { balanceForMonth, dominantMood, weeklySummary, type SummaryData } from './summary'
 
 const ride = (o: Partial<Ride>): Ride => ({
   id: Math.random().toString(),
@@ -24,21 +17,10 @@ const ride = (o: Partial<Ride>): Ride => ({
   updatedAt: 0,
   ...o,
 })
-const journal = (o: Partial<Journal>): Journal => ({
-  date: '2026-11-10',
-  sleep: 'cukup',
-  fruitPortions: 2,
-  kidMinutes: 30,
-  createdAt: 0,
-  updatedAt: 0,
-  ...o,
-})
 const body = (o: Partial<BodyLog>): BodyLog => ({ date: '2026-11-10', updatedAt: 0, ...o })
 
 const empty: SummaryData = {
   rides: [],
-  journals: [],
-  hydration: [],
   bodyLogs: [],
   checklistDays: [],
   idealWeightKg: null,
@@ -52,9 +34,6 @@ describe('weeklySummary — minggu kosong (AC-014)', () => {
     const s = weeklySummary(empty, WEEK, '2026-11-20')
     expect(s.hasData).toBe(false)
     expect(s.totals.count).toBe(0)
-    expect(s.sleepAvg).toBeNull()
-    expect(s.fruitAvg).toBeNull()
-    expect(s.waterAvgMl).toBeNull()
     expect(s.weightChangeKg).toBeNull()
     expect(s.mood).toBeNull()
     expect(s.checklistPercent).toBeNull()
@@ -114,31 +93,7 @@ describe('weeklySummary — pekan berjalan', () => {
   })
 })
 
-describe('weeklySummary — rata-rata & jumlah', () => {
-  it('tidur/buah/air dari hari yang punya data; menit anak dijumlah', () => {
-    const hydration: Hydration[] = [
-      { date: '2026-11-09', ml: 2000 },
-      { date: '2026-11-10', ml: 3000 },
-      { date: '2026-11-20', ml: 9999 }, // di luar pekan
-    ]
-    const s = weeklySummary(
-      {
-        ...empty,
-        hydration,
-        journals: [
-          journal({ date: '2026-11-09', sleep: 'segar', fruitPortions: 3, kidMinutes: 20 }),
-          journal({ date: '2026-11-10', sleep: 'kurang', fruitPortions: 1, kidMinutes: 40 }),
-        ],
-      },
-      WEEK,
-      '2026-11-30',
-    )
-    expect(s.sleepAvg).toBe(1)
-    expect(s.fruitAvg).toBe(2)
-    expect(s.waterAvgMl).toBe(2500)
-    expect(s.kidMinutes).toBe(60)
-  })
-
+describe('weeklySummary — jumlah', () => {
   it('total gowes, km, elevasi pekan', () => {
     const s = weeklySummary(
       {
@@ -253,15 +208,5 @@ describe('balanceForMonth (BR-018)', () => {
     )
     expect(b).toMatchObject({ total: 3, metime: 2, kid: 1, metimePercent: 67, kidPercent: 33 })
     expect((b.metimePercent ?? 0) + (b.kidPercent ?? 0)).toBe(100)
-  })
-})
-
-describe('util', () => {
-  it('sleepWord & mean', () => {
-    expect(sleepWord(2)).toBe('Segar')
-    expect(sleepWord(1)).toBe('Cukup')
-    expect(sleepWord(0.2)).toBe('Kurang')
-    expect(mean([])).toBeNull()
-    expect(mean([1, 2])).toBe(1.5)
   })
 })

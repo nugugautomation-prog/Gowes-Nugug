@@ -75,7 +75,9 @@ Satu peran: **Pemilik**. Tidak ada admin, login, atau multi-user.
 - FR-023 Garis target mingguan = target bulanan ÷ jumlah pekan kalender (Senin–Minggu) di bulan itu. **[CONFIRMED]** (B10)
 - FR-024 Progres bulanan: total km bulan berjalan, persentase terhadap target.
 
-### F-04 Jurnal & kesiapan gowes
+> **Revisi D-26 (2026-11-17):** F-04 (jurnal, kesiapan), F-05 (hidrasi), F-10 ide anak (FR-090/091) dan F-11 (nutrisi, FR-100) dihapus dari UI; FR-050 menjadi peregangan bertutorial; F-12 menjadi pengingat umum (FR-110…112 diganti). AC-007…010, AC-015 (bagian ceklis anak), AC-016 tidak lagi berlaku; AC-017 diganti pengujian pengingat umum. Lihat DECISION-LOG D-26.
+
+### F-04 Jurnal & kesiapan gowes [DIHAPUS, D-26]
 - FR-030 Jurnal harian: kualitas tidur (segar/cukup/kurang), porsi buah serat, menit main bareng anak.
 - FR-031 Jurnal dapat diisi untuk hari sebelumnya. **[CONFIRMED]**
 - FR-032 Kesiapan gowes dihitung dengan BR-001. Tidur dan buah dari jurnal **kemarin**, air dari hari **ini**. Jurnal kemarin kosong → "Belum ada data" (netral). **[CONFIRMED]** (B8)

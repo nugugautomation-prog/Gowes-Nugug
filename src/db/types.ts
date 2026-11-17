@@ -102,6 +102,21 @@ export interface KidCheck {
   updatedAt: number
 }
 
+export type Repeat = 'none' | 'daily' | 'weekly' | 'monthly'
+
+/** Pengingat umum (judul, tanggal, jam, ulangi). `date` = kejadian pertama. */
+export interface Reminder {
+  id: string
+  title: string
+  note?: string
+  date: string
+  time: string
+  repeat: Repeat
+  done: boolean
+  createdAt: number
+  updatedAt: number
+}
+
 export interface ReminderTimes {
   minum: string[]
   jurnal: string

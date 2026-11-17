@@ -8,12 +8,13 @@ import type {
   Hydration,
   Journal,
   KidCheck,
+  Reminder,
   Ride,
   SettingRow,
   TrackPoint,
 } from './types'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /**
  * Skema berversi. Perubahan skema = tambah `this.version(n+1)` + fungsi `.upgrade()` + uji
@@ -31,6 +32,7 @@ export class GowesDB extends Dexie {
   checklist_days!: Table<ChecklistDay, [string, string]>
   kid_checks!: EntityTable<KidCheck, 'activityId'>
   settings!: EntityTable<SettingRow, 'key'>
+  reminders!: EntityTable<Reminder, 'id'>
 
   constructor(name = 'gowessehat') {
     super(name)
@@ -47,6 +49,8 @@ export class GowesDB extends Dexie {
       kid_checks: 'activityId',
       settings: 'key',
     })
+    // v2 (D-26): pengingat umum. Hanya menambah tabel; data lama tidak berubah.
+    this.version(2).stores({ reminders: 'id, date' })
   }
 }
 

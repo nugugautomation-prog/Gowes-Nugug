@@ -28,6 +28,7 @@ export async function readAll(db: GowesDB = defaultDb): Promise<BackupData> {
       db.checklist_items,
       db.checklist_days,
       db.kid_checks,
+      db.reminders,
       db.settings,
     ],
     async () => {
@@ -43,6 +44,7 @@ export async function readAll(db: GowesDB = defaultDb): Promise<BackupData> {
         checklistItems: await db.checklist_items.toArray(),
         checklistDays: await db.checklist_days.toArray(),
         kidChecks: await db.kid_checks.toArray(),
+        reminders: await db.reminders.toArray(),
         settings,
       }
     },
@@ -90,6 +92,7 @@ export async function importBackup(
       db.checklist_items,
       db.checklist_days,
       db.kid_checks,
+      db.reminders,
       db.settings,
     ],
     async () => {
@@ -105,6 +108,7 @@ export async function importBackup(
           db.checklist_items,
           db.checklist_days,
           db.kid_checks,
+          db.reminders,
           db.settings,
         ].map((t) => t.clear()),
       )
@@ -116,6 +120,7 @@ export async function importBackup(
       await db.checklist_items.bulkAdd(data.checklistItems)
       await db.checklist_days.bulkAdd(data.checklistDays)
       await db.kid_checks.bulkAdd(data.kidChecks)
+      await db.reminders.bulkAdd(data.reminders)
       const merged = { ...DEFAULT_SETTINGS, ...data.settings, lastImportAt: nowMs }
       merged.schemaVersion = DEFAULT_SETTINGS.schemaVersion
       await db.settings.bulkAdd(
@@ -128,14 +133,14 @@ export async function importBackup(
 export interface DataCounts {
   rides: number
   trackPoints: number
-  journals: number
+  reminders: number
   bodyLogs: number
 }
 
 export const countsOf = (d: BackupData): DataCounts => ({
   rides: d.rides.length,
   trackPoints: d.trackPoints.length,
-  journals: d.journals.length,
+  reminders: d.reminders.length,
   bodyLogs: d.bodyLogs.length,
 })
 
@@ -143,7 +148,7 @@ export async function currentCounts(db: GowesDB = defaultDb): Promise<DataCounts
   return {
     rides: await db.rides.count(),
     trackPoints: await db.track_points.count(),
-    journals: await db.journals.count(),
+    reminders: await db.reminders.count(),
     bodyLogs: await db.body_logs.count(),
   }
 }

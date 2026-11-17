@@ -1,34 +1,15 @@
-import type { BodyLog, ChecklistDay, Condition, Hydration, Journal, Ride, Sleep } from '../db/types'
+import type { BodyLog, ChecklistDay, Condition, Ride } from '../db/types'
 import { addDays, totalsForWeek, type WeekTotals } from './stats'
 
 /** Bahan ringkasan: semua data mentah; fungsi di sini murni (tanpa DB/jam). */
 export interface SummaryData {
   rides: Ride[]
-  journals: Journal[]
-  hydration: Hydration[]
   bodyLogs: BodyLog[]
   checklistDays: ChecklistDay[]
   idealWeightKg: number | null
 }
 
-const SLEEP_SCORE: Record<Sleep, number> = { segar: 2, cukup: 1, kurang: 0 }
-
-export type SleepWord = 'Segar' | 'Cukup' | 'Kurang'
-
-/** Rata-rata skor tidur (2/1/0) dipetakan ke kata. */
-export function sleepWord(avg: number): SleepWord {
-  if (avg >= 1.5) return 'Segar'
-  if (avg >= 0.5) return 'Cukup'
-  return 'Kurang'
-}
-
 const inWeek = (date: string, start: string) => date >= start && date <= addDays(start, 6)
-
-/** Rata-rata; daftar kosong → null (bukan NaN). */
-export function mean(values: number[]): number | null {
-  if (values.length === 0) return null
-  return values.reduce((s, v) => s + v, 0) / values.length
-}
 
 /** Mood paling sering; seri → yang terbaru (BR-019). */
 export function dominantMood(logs: BodyLog[]): Condition | null {
@@ -74,10 +55,6 @@ export interface WeeklySummary {
   partial: boolean
   totals: WeekTotals
   comparison: WeekComparison
-  sleepAvg: number | null
-  fruitAvg: number | null
-  waterAvgMl: number | null
-  kidMinutes: number
   weightChangeKg: number | null
   latestWeightKg: number | null
   gapToIdealKg: number | null
@@ -118,8 +95,6 @@ export function weeklySummary(data: SummaryData, start: string, today: string): 
     hasPrevious: prev.count > 0,
   }
 
-  const journals = data.journals.filter((j) => inWeek(j.date, start))
-  const waters = data.hydration.filter((h) => inWeek(h.date, start))
   const bodies = data.bodyLogs.filter((b) => inWeek(b.date, start))
 
   const weights = data.bodyLogs
@@ -141,12 +116,7 @@ export function weeklySummary(data: SummaryData, start: string, today: string): 
   const checklistPercent =
     cl.length > 0 ? (cl.filter((c) => c.done).length * 100) / cl.length : null
 
-  const hasData =
-    totals.count > 0 ||
-    journals.length > 0 ||
-    waters.length > 0 ||
-    bodies.length > 0 ||
-    cl.length > 0
+  const hasData = totals.count > 0 || bodies.length > 0 || cl.length > 0
 
   return {
     weekStart: start,
@@ -155,10 +125,6 @@ export function weeklySummary(data: SummaryData, start: string, today: string): 
     partial,
     totals,
     comparison,
-    sleepAvg: mean(journals.map((j) => SLEEP_SCORE[j.sleep])),
-    fruitAvg: mean(journals.map((j) => j.fruitPortions)),
-    waterAvgMl: mean(waters.map((h) => h.ml)),
-    kidMinutes: journals.reduce((s, j) => s + j.kidMinutes, 0),
     weightChangeKg,
     latestWeightKg,
     gapToIdealKg,

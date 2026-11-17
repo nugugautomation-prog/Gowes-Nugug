@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import Dexie from 'dexie'
 import { GowesDB, SCHEMA_VERSION } from './database'
 import { DEFAULT_SETTINGS, ensureDefaults, getSetting, setSetting } from './settings'
 
@@ -30,12 +31,62 @@ describe('skema Dexie', () => {
         'hydration',
         'journals',
         'kid_checks',
+        'reminders',
         'rides',
         'settings',
         'track_points',
       ].sort(),
     )
     expect(db.verno).toBe(SCHEMA_VERSION)
+  })
+
+  it('migrasi v1 → v2: data lama utuh, tabel pengingat baru kosong dan bisa dipakai', async () => {
+    const name = `gowessehat-migrasi-${Math.random()}`
+    // Basis data versi 1 (sebelum pengingat umum), dibuat dengan Dexie polos.
+    const old = new Dexie(name)
+    old.version(1).stores({
+      rides: 'id, date, source',
+      track_points: '[rideId+seq], rideId',
+      active_recording: 'id',
+      active_points: 'seq',
+      journals: 'date',
+      hydration: 'date',
+      body_logs: 'date',
+      checklist_items: 'id, order',
+      checklist_days: '[date+itemId], date',
+      kid_checks: 'activityId',
+      settings: 'key',
+    })
+    await old.open()
+    await old.table('body_logs').add({ date: '2026-11-10', weightKg: 80, updatedAt: 1 })
+    await old.table('journals').add({
+      date: '2026-11-10',
+      sleep: 'cukup',
+      fruitPortions: 1,
+      kidMinutes: 0,
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    old.close()
+
+    const upgraded = new GowesDB(name)
+    await upgraded.open()
+    expect(upgraded.verno).toBe(SCHEMA_VERSION)
+    expect(await upgraded.body_logs.get('2026-11-10')).toMatchObject({ weightKg: 80 })
+    expect(await upgraded.journals.count()).toBe(1) // tabel lama tetap ada
+    expect(await upgraded.reminders.count()).toBe(0)
+    await upgraded.reminders.add({
+      id: 'r',
+      title: 't',
+      date: '2026-11-20',
+      time: '08:00',
+      repeat: 'none',
+      done: false,
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    expect(await upgraded.reminders.count()).toBe(1)
+    upgraded.close()
   })
 
   it('rides bisa dicari lewat indeks date dan source', async () => {

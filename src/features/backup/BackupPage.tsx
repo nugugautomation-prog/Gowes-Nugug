@@ -25,7 +25,7 @@ function when(ms: number | null): string {
 }
 
 const line = (c: DataCounts) =>
-  `${c.rides} gowes, ${c.journals} jurnal, ${c.bodyLogs} catatan tubuh, ${c.trackPoints} titik GPS`
+  `${c.rides} gowes, ${c.reminders} pengingat, ${c.bodyLogs} catatan tubuh, ${c.trackPoints} titik GPS`
 
 /** Cadangan JSON (F-13): ekspor, dan impor yang mengganti semua data setelah pratinjau + konfirmasi. */
 export function BackupPage() {

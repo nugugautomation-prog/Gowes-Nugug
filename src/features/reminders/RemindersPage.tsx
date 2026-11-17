@@ -1,144 +1,349 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db } from '../../db/database'
-import { getSetting, setSetting } from '../../db/settings'
-import type { ReminderTimes } from '../../db/types'
+import type { Reminder, Repeat } from '../../db/types'
+import { buildIcs, reminderToEvent } from '../../domain/ics'
 import {
-  REMINDER_LABEL,
-  buildIcs,
-  buildReminderEvents,
-  validTime,
-  type ReminderKind,
-} from '../../domain/ics'
+  REPEAT_LABEL,
+  groupReminders,
+  nextWeekday,
+  relativeDay,
+  validateReminder,
+  type ReminderErrors,
+} from '../../domain/reminders'
 import { toLocalDate } from '../../domain/ride'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { Chip } from '../../ui/Chip'
 import { Field } from '../../ui/Field'
-import { PageHeader } from '../../ui/PageHeader'
+import { EmptyState, PageHeader } from '../../ui/PageHeader'
+import { Sheet } from '../../ui/Sheet'
+import { useNow } from '../../ui/useNow'
 import { useToast } from '../../ui/Toast'
 import { downloadText } from '../diagnostics/checks'
+import { formatTanggal } from '../rides/RideList'
+import {
+  addReminder,
+  deleteReminder,
+  restoreReminder,
+  setReminderDone,
+  updateReminder,
+  useReminders,
+} from './remindersRepo'
 
-const KINDS: ReminderKind[] = ['minum', 'jurnal', 'sabtu', 'minggu']
 const inputCls =
   'min-h-12 w-full rounded-xl border border-line bg-bg px-3 text-text tabular placeholder:text-muted'
 
-/** Pengingat lewat kalender HP (F-12): pilih jenis & jam, unduh .ics berulang. */
+const hhmm = (d: Date) =>
+  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+
+function when(date: string, time: string, today: string): string {
+  const rel = relativeDay(date, today)
+  const day = rel === 'hari_ini' ? 'Hari ini' : rel === 'besok' ? 'Besok' : formatTanggal(date)
+  return `${day} · ${time}`
+}
+
+/** Pengingat umum (F-12 direvisi, D-26): daftar jadwal + kirim ke Kalender HP untuk alarm. */
 export function RemindersPage() {
-  const saved = useLiveQuery(() => getSetting(db, 'reminderTimes'), [])
-  return (
-    <>
-      <PageHeader title="Pengingat" subtitle="Alarm dibunyikan oleh Kalender HP" />
-      {saved === undefined ? (
+  const now = useNow()
+  const today = toLocalDate(now)
+  const nowTime = hhmm(now)
+  const toast = useToast()
+  const all = useReminders()
+  const [sheet, setSheet] = useState<{ reminder?: Reminder } | null>(null)
+
+  function toCalendar(list: Reminder[], filename: string) {
+    try {
+      const ics = buildIcs(list.map(reminderToEvent), now.getTime())
+      const r = downloadText(filename, 'text/calendar', ics)
+      if (r.status === 'fail') toast.show('Gagal membuat file kalender')
+      else toast.show('File dibuat. Buka dengan Kalender HP ✓')
+    } catch {
+      toast.show('Gagal membuat file kalender')
+    }
+  }
+
+  if (all === undefined)
+    return (
+      <>
+        <PageHeader title="Pengingat" />
         <p className="text-muted" role="status">
           Memuat…
         </p>
-      ) : (
-        <RemindersForm initial={saved} />
-      )}
+      </>
+    )
+
+  const g = groupReminders(all, today, nowTime)
+  const active = [...g.overdue, ...g.upcoming.map((u) => u.reminder)]
+
+  return (
+    <>
+      <PageHeader
+        title="Pengingat"
+        subtitle="Jadwal supaya tidak lupa"
+        action={<Button onClick={() => setSheet({})}>Tambah</Button>}
+      />
+      <div className="space-y-4">
+        {all.length === 0 ? (
+          <EmptyState
+            title="Belum ada pengingat"
+            hint="Ketuk Tambah untuk membuat jadwal, mis. servis sepeda atau gowes Sabtu sore."
+          />
+        ) : null}
+
+        {g.overdue.length > 0 ? (
+          <section aria-label="Terlewat" className="space-y-2">
+            <h2 className="font-semibold text-warn">Terlewat</h2>
+            {g.overdue.map((r) => (
+              <Item
+                key={r.id}
+                r={r}
+                label={when(r.date, r.time, today)}
+                overdue
+                onEdit={() => setSheet({ reminder: r })}
+                onCalendar={() => toCalendar([r], `pengingat-${r.date}.ics`)}
+                onDone={() => void setReminderDone(r.id, true)}
+              />
+            ))}
+          </section>
+        ) : null}
+
+        {g.upcoming.length > 0 ? (
+          <section aria-label="Akan datang" className="space-y-2">
+            <h2 className="font-semibold">Akan datang</h2>
+            {g.upcoming.map(({ reminder: r, next }) => (
+              <Item
+                key={r.id}
+                r={r}
+                label={when(next.date, next.time, today)}
+                onEdit={() => setSheet({ reminder: r })}
+                onCalendar={() => toCalendar([r], `pengingat-${r.date}.ics`)}
+                onDone={r.repeat === 'none' ? () => void setReminderDone(r.id, true) : undefined}
+              />
+            ))}
+          </section>
+        ) : null}
+
+        {active.length > 1 ? (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => toCalendar(active, 'pengingat-gowessehat.ics')}
+          >
+            Kirim semua ke Kalender
+          </Button>
+        ) : null}
+
+        {g.done.length > 0 ? (
+          <section aria-label="Selesai" className="space-y-2">
+            <h2 className="font-semibold text-muted">Selesai</h2>
+            {g.done.map((r) => (
+              <Item
+                key={r.id}
+                r={r}
+                label={when(r.date, r.time, today)}
+                done
+                onEdit={() => setSheet({ reminder: r })}
+                onDone={() => void setReminderDone(r.id, false)}
+              />
+            ))}
+          </section>
+        ) : null}
+
+        <p className="text-sm text-muted">
+          Alarm dibunyikan oleh Kalender HP. Ketuk <strong>Kalender</strong> pada pengingat, lalu
+          buka file yang diunduh. Mengimpor ulang tidak menggandakan acara yang sama.
+        </p>
+      </div>
+
+      {sheet ? (
+        <ReminderForm
+          key={sheet.reminder?.id ?? 'baru'}
+          reminder={sheet.reminder}
+          today={today}
+          onClose={() => setSheet(null)}
+          onDelete={async (r) => {
+            const snapshot = await deleteReminder(r.id)
+            setSheet(null)
+            toast.show('Pengingat dihapus', {
+              label: 'Urungkan',
+              onClick: () => {
+                if (snapshot) void restoreReminder(snapshot)
+              },
+            })
+          }}
+        />
+      ) : null}
     </>
   )
 }
 
-function RemindersForm({ initial }: { initial: ReminderTimes }) {
+function Item({
+  r,
+  label,
+  overdue = false,
+  done = false,
+  onEdit,
+  onCalendar,
+  onDone,
+}: {
+  r: Reminder
+  label: string
+  overdue?: boolean
+  done?: boolean
+  onEdit: () => void
+  onCalendar?: () => void
+  onDone?: () => void
+}) {
+  return (
+    <Card className={`p-0 ${overdue ? 'border-warn' : ''}`}>
+      <button
+        type="button"
+        className="min-h-12 w-full p-4 text-left"
+        aria-label={`Pengingat ${r.title}`}
+        onClick={onEdit}
+      >
+        <span className={`block font-semibold ${done ? 'text-muted line-through' : ''}`}>
+          {r.title}
+        </span>
+        <span className="tabular block text-sm text-muted">
+          {label}
+          {r.repeat !== 'none' ? ` · ${REPEAT_LABEL[r.repeat]}` : ''}
+        </span>
+        {r.note ? <span className="mt-1 block text-sm text-muted">{r.note}</span> : null}
+      </button>
+      <div className="flex gap-2 px-4 pb-3">
+        {onDone ? (
+          <Button
+            variant="secondary"
+            onClick={onDone}
+            aria-label={`${done ? 'Batal selesai' : 'Selesai'} ${r.title}`}
+          >
+            {done ? 'Batal selesai' : 'Selesai'}
+          </Button>
+        ) : null}
+        {onCalendar ? (
+          <Button variant="secondary" onClick={onCalendar} aria-label={`Kalender ${r.title}`}>
+            Kalender
+          </Button>
+        ) : null}
+      </div>
+    </Card>
+  )
+}
+
+function ReminderForm({
+  reminder,
+  today,
+  onClose,
+  onDelete,
+}: {
+  reminder?: Reminder
+  today: string
+  onClose: () => void
+  onDelete: (r: Reminder) => void | Promise<void>
+}) {
   const toast = useToast()
-  const [times, setTimes] = useState<ReminderTimes>(initial)
-  const [kinds, setKinds] = useState<ReminderKind[]>(KINDS)
-  const [error, setError] = useState<string | null>(null)
+  const [title, setTitle] = useState(reminder?.title ?? '')
+  const [date, setDate] = useState(reminder?.date ?? today)
+  const [time, setTime] = useState(reminder?.time ?? '09:00')
+  const [repeat, setRepeat] = useState<Repeat>(reminder?.repeat ?? 'none')
+  const [note, setNote] = useState(reminder?.note ?? '')
+  const [errors, setErrors] = useState<ReminderErrors>({})
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const timeErr = (t: string) => (validTime(t) ? undefined : 'Isi jam yang valid, mis. 09:00')
-  const toggle = (k: ReminderKind) =>
-    setKinds((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]))
+  function preset(kind: 'sabtu' | 'minggu') {
+    setTitle(kind === 'sabtu' ? 'Gowes sore 🚴' : 'Gowes pagi 🚴')
+    setTime(kind === 'sabtu' ? '16:30' : '06:00')
+    setDate(nextWeekday(today, kind === 'sabtu' ? 5 : 6))
+    setRepeat('weekly')
+  }
 
-  const set = (k: 'jurnal' | 'sabtu' | 'minggu', v: string) => setTimes({ ...times, [k]: v })
-  const setMinum = (i: number, v: string) =>
-    setTimes({ ...times, minum: times.minum.map((t, j) => (j === i ? v : t)) })
-
-  async function create() {
-    setError(null)
-    if (kinds.length === 0) return setError('Pilih minimal satu jenis pengingat.')
-    const used = kinds.flatMap((k) => (k === 'minum' ? times.minum : [times[k]]))
-    if (used.some((t) => !validTime(t))) return setError('Periksa jam yang berwarna merah.')
+  async function submit(ev: React.FormEvent) {
+    ev.preventDefault()
+    const input = { title, note, date, time, repeat }
+    const e = validateReminder(input)
+    setErrors(e)
+    if (Object.keys(e).length > 0) return
+    setSaving(true)
+    setSaveError(null)
     try {
-      await setSetting(db, 'reminderTimes', times)
-      const events = buildReminderEvents(times, kinds, toLocalDate(new Date()))
-      const r = downloadText(
-        'pengingat-gowessehat.ics',
-        'text/calendar',
-        buildIcs(events, Date.now()),
-      )
-      if (r.status === 'fail') return setError(`Gagal membuat file: ${r.detail}`)
-      toast.show('File dibuat. Buka dengan Kalender HP ✓')
+      if (reminder) await updateReminder(reminder.id, input)
+      else await addReminder(input)
+      toast.show(reminder ? 'Perubahan tersimpan ✓' : 'Pengingat tersimpan ✓')
+      onClose()
     } catch {
-      setError('Gagal menyimpan jam. Coba lagi.')
+      setSaveError('Gagal menyimpan. Isianmu masih ada, coba lagi.')
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <h2 className="mb-2 font-semibold">Jenis pengingat</h2>
-        <div className="flex flex-wrap gap-2">
-          {KINDS.map((k) => (
-            <Chip key={k} selected={kinds.includes(k)} onClick={() => toggle(k)}>
-              {REMINDER_LABEL[k]}
-            </Chip>
-          ))}
+    <Sheet open title={reminder ? 'Ubah Pengingat' : 'Pengingat Baru'} onClose={onClose}>
+      <form onSubmit={submit} noValidate className="space-y-4">
+        {!reminder ? (
+          <div className="flex flex-wrap gap-2">
+            <Chip onClick={() => preset('sabtu')}>Gowes Sabtu sore</Chip>
+            <Chip onClick={() => preset('minggu')}>Gowes Minggu pagi</Chip>
+          </div>
+        ) : null}
+        <Field label="Judul" error={errors.title}>
+          <input
+            className={inputCls}
+            value={title}
+            placeholder="mis. Servis sepeda"
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </Field>
+        <Field label="Tanggal" error={errors.date}>
+          <input
+            type="date"
+            className={inputCls}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </Field>
+        <Field label="Jam" error={errors.time}>
+          <input
+            type="time"
+            className={inputCls}
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
+        </Field>
+        <fieldset>
+          <legend className="mb-1 text-sm text-muted">Ulangi</legend>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(REPEAT_LABEL) as Repeat[]).map((r) => (
+              <Chip key={r} selected={repeat === r} onClick={() => setRepeat(r)}>
+                {REPEAT_LABEL[r]}
+              </Chip>
+            ))}
+          </div>
+        </fieldset>
+        <Field label="Catatan (opsional)" error={errors.note}>
+          <textarea
+            className="min-h-20 w-full rounded-xl border border-line bg-bg p-3 text-text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </Field>
+        {saveError ? (
+          <p role="alert" className="text-danger">
+            {saveError}
+          </p>
+        ) : null}
+        <div className="sticky bottom-0 -mx-4 flex gap-2 bg-card px-4 pt-2">
+          {reminder ? (
+            <Button variant="danger" onClick={() => void onDelete(reminder)}>
+              Hapus
+            </Button>
+          ) : null}
+          <Button type="submit" className="flex-1" disabled={saving}>
+            {saving ? 'Menyimpan…' : 'Simpan'}
+          </Button>
         </div>
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold">Jam</h2>
-        <div className="space-y-4">
-          {times.minum.map((t, i) => (
-            <Field key={i} label={`Minum air ${i + 1}`} error={timeErr(t)}>
-              <input
-                type="time"
-                className={inputCls}
-                value={t}
-                onChange={(e) => setMinum(i, e.target.value)}
-              />
-            </Field>
-          ))}
-          <Field label="Jurnal malam" error={timeErr(times.jurnal)}>
-            <input
-              type="time"
-              className={inputCls}
-              value={times.jurnal}
-              onChange={(e) => set('jurnal', e.target.value)}
-            />
-          </Field>
-          <Field label="Gowes Sabtu" error={timeErr(times.sabtu)}>
-            <input
-              type="time"
-              className={inputCls}
-              value={times.sabtu}
-              onChange={(e) => set('sabtu', e.target.value)}
-            />
-          </Field>
-          <Field label="Gowes Minggu" error={timeErr(times.minggu)}>
-            <input
-              type="time"
-              className={inputCls}
-              value={times.minggu}
-              onChange={(e) => set('minggu', e.target.value)}
-            />
-          </Field>
-        </div>
-      </Card>
-
-      {error ? (
-        <p role="alert" className="text-danger">
-          {error}
-        </p>
-      ) : null}
-      <Button className="w-full" onClick={() => void create()}>
-        Buat file kalender
-      </Button>
-      <p className="text-sm text-muted">
-        Setelah diunduh, buka file-nya dengan Kalender HP. Pengingat berulang otomatis dan jam
-        memakai zona WIB (Asia/Jakarta). Mengimpor ulang tidak menggandakan acara yang sama.
-      </p>
-    </div>
+      </form>
+    </Sheet>
   )
 }
