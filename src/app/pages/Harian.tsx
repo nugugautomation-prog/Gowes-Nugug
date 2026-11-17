@@ -3,6 +3,7 @@ import { MoodCard } from '../../features/body/MoodCard'
 import { ChecklistCard } from '../../features/checklist/ChecklistCard'
 import { HydrationCard } from '../../features/daily/HydrationCard'
 import { JournalCard } from '../../features/daily/JournalCard'
+import { StretchCard } from '../../features/stretch/StretchCard'
 import { PageHeader } from '../../ui/PageHeader'
 import { useNow } from '../../ui/useNow'
 
@@ -16,6 +17,7 @@ export function Harian() {
         <ChecklistCard today={today} />
         <JournalCard today={today} />
         <MoodCard today={today} />
+        <StretchCard />
       </div>
     </>
   )

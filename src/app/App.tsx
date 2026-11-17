@@ -1,3 +1,5 @@
+import { KidIdeasPage } from '../features/kids/KidIdeasPage'
+import { NutritionPage } from '../features/nutrition/NutritionPage'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '../ui/Toast'
 import { AppLayout } from './AppLayout'
@@ -18,6 +20,8 @@ export function AppRoutes() {
         <Route path="harian" element={<Harian />} />
         <Route path="progres" element={<Progres />} />
         <Route path="lainnya" element={<Lainnya />} />
+        <Route path="lainnya/anak" element={<KidIdeasPage />} />
+        <Route path="lainnya/nutrisi" element={<NutritionPage />} />
         <Route path="lainnya/uji-hp" element={<DiagnosticsPage />} />
         <Route path="lainnya/galeri" element={<Galeri />} />
         <Route path="*" element={<Navigate to="/" replace />} />
