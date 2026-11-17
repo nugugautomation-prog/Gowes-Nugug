@@ -1,0 +1,23 @@
+# dependencies & build
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+
+# data pribadi / tidak boleh publik (D-17)
+Referensi/
+*.gpx
+*backup*.json
+*.ics
+.env
+.env.*
+
+# tools & OS
+.claude/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+playwright-report/
+test-results/

@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+/*
+  Token warna (D-16). Mode gelap = bawaan. Neon hanya sebagai isi tombol/aksen;
+  teks hijau di tema terang memakai hijau tua. Nilai diuji kontrasnya di src/ui/theme.test.ts.
+*/
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c100d;
+  --card: #151b16;
+  --text: #eaf2eb;
+  --muted: #97a89a;
+  --line: #243027;
+  --accent: #39ff14;
+  --on-accent: #07140a;
+  --brand: #39ff14;
+  --warn: #ffc53d;
+  --danger: #ff5c5c;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f4f7f4;
+  --card: #ffffff;
+  --text: #142016;
+  --muted: #5b6b5e;
+  --line: #dce5dd;
+  --accent: #39ff14;
+  --on-accent: #07140a;
+  --brand: #0b7a2b;
+  --warn: #8a6100;
+  --danger: #c62828;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='system'] {
+    color-scheme: light;
+    --bg: #f4f7f4;
+    --card: #ffffff;
+    --text: #142016;
+    --muted: #5b6b5e;
+    --line: #dce5dd;
+    --accent: #39ff14;
+    --on-accent: #07140a;
+    --brand: #0b7a2b;
+    --warn: #8a6100;
+    --danger: #c62828;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-brand: var(--brand);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Input >= 16px agar browser HP tidak auto-zoom (AC-031) */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  font-size: 16px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
