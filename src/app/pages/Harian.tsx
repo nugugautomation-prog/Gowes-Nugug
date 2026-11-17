@@ -1,13 +1,17 @@
-import { EmptyState, PageHeader } from '../../ui/PageHeader'
+import { toLocalDate } from '../../domain/ride'
+import { HydrationCard } from '../../features/daily/HydrationCard'
+import { JournalCard } from '../../features/daily/JournalCard'
+import { PageHeader } from '../../ui/PageHeader'
 
 export function Harian() {
+  const today = toLocalDate(new Date())
   return (
     <>
-      <PageHeader title="Harian" subtitle="Jurnal, air, checklist, mood" />
-      <EmptyState
-        title="Belum ada catatan hari ini"
-        hint="Jurnal, hidrasi, dan checklist hadir di modul M3–M5."
-      />
+      <PageHeader title="Harian" subtitle="Jurnal dan air" />
+      <div className="space-y-4">
+        <HydrationCard today={today} />
+        <JournalCard today={today} />
+      </div>
     </>
   )
 }
