@@ -1,4 +1,5 @@
 import { KidIdeasPage } from '../features/kids/KidIdeasPage'
+import { BackupPage } from '../features/backup/BackupPage'
 import { RemindersPage } from '../features/reminders/RemindersPage'
 import { NutritionPage } from '../features/nutrition/NutritionPage'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route path="lainnya/anak" element={<KidIdeasPage />} />
         <Route path="lainnya/nutrisi" element={<NutritionPage />} />
         <Route path="lainnya/pengingat" element={<RemindersPage />} />
+        <Route path="lainnya/cadangan" element={<BackupPage />} />
         <Route path="lainnya/uji-hp" element={<DiagnosticsPage />} />
         <Route path="lainnya/galeri" element={<Galeri />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -59,6 +59,14 @@ export function Lainnya() {
                 Pengingat
               </Link>
             </li>
+            <li>
+              <Link
+                className="flex min-h-12 items-center text-brand underline"
+                to="/lainnya/cadangan"
+              >
+                Cadangan data
+              </Link>
+            </li>
           </ul>
         </Card>
         <Card>

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -63,8 +63,10 @@ describe('Halaman konten', () => {
     )
     const box = await screen.findByRole('checkbox', { name: /Berburu warna/ })
     await user.click(box)
-    expect(box).toBeChecked()
-    expect(await db.kid_checks.get('berburu-warna')).toMatchObject({ done: true })
+    await waitFor(async () =>
+      expect(await db.kid_checks.get('berburu-warna')).toMatchObject({ done: true }),
+    )
+    await waitFor(() => expect(box).toBeChecked())
     first.unmount()
 
     render(
@@ -72,7 +74,9 @@ describe('Halaman konten', () => {
         <KidIdeasPage />
       </MemoryRouter>,
     )
-    expect(await screen.findByRole('checkbox', { name: /Berburu warna/ })).toBeChecked()
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: /Berburu warna/ })).toBeChecked(),
+    )
   })
 
   it('"Ide Baru" mengganti ide hari ini dan disclaimer tampil', async () => {

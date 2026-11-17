@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useSetting } from '../../db/useSetting'
 import { toLocalDate } from '../../domain/ride'
+import { BackupBanner } from '../../features/backup/BackupBanner'
 import { useReadiness } from '../../features/daily/dailyRepo'
 import { ReadinessCard } from '../../features/daily/ReadinessCard'
 import { MonthProgressCard } from '../../features/stats/MonthProgressCard'
@@ -20,6 +21,7 @@ export function Beranda() {
     <>
       <PageHeader title="Beranda" subtitle="GowesSehat" />
       <div className="space-y-4">
+        <BackupBanner />
         <ReadinessCard status={readiness?.status} />
         {rides === undefined ? (
           <p className="text-muted" role="status">
